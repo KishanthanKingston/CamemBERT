@@ -1,0 +1,8 @@
+Datsaset for evaluate our model:
+
+- Universal Dependencies: https://universaldependencies.org/#download
+French treebanks: GSD, Sequoia, ParTUT, ParisStories (Spoken)
+
+FTB lite: http://ftb.linguist.univ-paris-diderot.fr/telecharger.php?langue=en
+
+UD_French-FTB: https://github.com/UniversalDependencies/UD_French-FTB/blob/master/README.md
