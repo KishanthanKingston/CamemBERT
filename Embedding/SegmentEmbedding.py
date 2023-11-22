@@ -1,3 +1,15 @@
+"""
+Project : CamemBERT
+Unit : Advanced Machine Learning 
+MSc. Intelligent systems engineering
+SORBONNE UNIVERSITÉ
+
+--- Students ---
+@SSivanesan - Shivamshan SIVANESAN
+@Emirtas7 - Emir TAS
+@KishanthanKingston - Kishanthan KINGSTON
+"""
+
 import numpy as np
 
 def segment_embedding(segment_ids, d_model):
