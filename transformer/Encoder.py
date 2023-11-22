@@ -28,7 +28,7 @@ class OneEncoderLayer(nn.Module):
     def forward(self, x, mask=None):
         # Multi-Head Attention
         attention_output, _ = self.self_attention(x, x, x, mask=mask)
-        x = self.layer_norm1(x + attention_output)
+        x = self.layer_norm1(x + attention_output) 
         
         # FeedForward layer
         feedforward_output = self.feedforward(x)
