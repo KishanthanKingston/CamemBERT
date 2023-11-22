@@ -18,7 +18,7 @@ from Encoder import Encoder
 from Decoder import Decoder
 
 class Transformer(nn.Module):
-    def __init__(self, num_encoder_layers, num_decoder_layers, d_model, num_heads, d_ff):
+    def __init__(self, num_encoder_layers, num_decoder_layers, d_model=512, num_heads=8, d_ff=2048):
         super(Transformer, self).__init__()
         self.encoder = Encoder(num_encoder_layers, d_model, num_heads, d_ff)
         self.decoder = Decoder(num_decoder_layers, d_model, num_heads, d_ff)
