@@ -1,3 +1,16 @@
+"""
+Project : CamemBERT
+Unit : Advanced Machine Learning 
+MSc. Intelligent systems engineering
+SORBONNE UNIVERSITÉ
+
+--- Students ---
+@KishanthanKingston - Kishanthan KINGSTON
+@SSivanesan - Shivamshan SIVANESAN
+@Emirtas7 - Emir TAS
+"""
+
+
 import numpy as np
 
 def positional_embedding(max_len, d_model):
