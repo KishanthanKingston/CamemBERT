@@ -21,7 +21,7 @@ class SimpleRoBERTa(nn.Module):
 
         super(SimpleRoBERTa, self).__init__()
 
-        self.positional_encoding = self._get_positional_encoding(hidden_size, max_len)
+        # self.positional_encoding = self._get_positional_encoding(hidden_size, max_len)
 
         # Plusieurs couches d'attention, on utilise MultiheadAttention disponible sur PyTorch
         self.attention_layers = nn.ModuleList([
@@ -38,8 +38,7 @@ class SimpleRoBERTa(nn.Module):
         # Couche de sortie
         self.output_layer = nn.Linear(hidden_size, output_size)
             # Instanciation
-        self.positional_encoding_instance = PositionalEncoding(d_model=512, max_len=512)
-
+        self.positional_encoding_instance = PositionalEncoding()
 
     def forward(self, x):
         # Ajout du positional encoding
