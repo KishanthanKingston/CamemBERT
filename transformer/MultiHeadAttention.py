@@ -46,11 +46,20 @@ class MultiHeadAttention(nn.Module):
         
         return output, attention_weights
     
-    def forward(self, query, key, value):
+    def forward(self, query, key, value, mask=None):
+        query = query.float()
+        key = key.float()
+        value = value.float()
+        
         q = self.query(query)
         k = self.key(key)
         v = self.value(value)
         
+        if (len(q.shape) == 2 and len(k.shape) == 2 and len(v.shape)) == 2:
+            q = q.unsqueeze(0)  
+            k = k.unsqueeze(0)
+            v = v.unsqueeze(0)
+            
         q = self.split_heads(q)
         k = self.split_heads(k)
         v = self.split_heads(v)
