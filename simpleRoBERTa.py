@@ -13,13 +13,12 @@ SORBONNE UNIVERSITÉ
 import torch
 import torch.nn as nn
 import numpy as np
-
-from PositionalEncoding import PositionalEncoding
-
+from transformer.PositionalEncoding import PositionalEncoding
 
 class SimpleRoBERTa(nn.Module):
     # C'est une version simplifiée de l'architecture RoBERTa pour commencer
     def __init__(self, ff_dim, output_size, input_size=768, hidden_size=512, num_heads=4,  num_layers=6, max_len=1000):
+
         super(SimpleRoBERTa, self).__init__()
 
         self.positional_encoding = self._get_positional_encoding(hidden_size, max_len)

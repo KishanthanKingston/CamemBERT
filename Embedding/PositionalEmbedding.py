@@ -9,8 +9,6 @@ SORBONNE UNIVERSITÉ
 @SSivanesan - Shivamshan SIVANESAN
 @Emirtas7 - Emir TAS
 """
-
-
 import numpy as np
 
 def positional_embedding(max_len, d_model):
