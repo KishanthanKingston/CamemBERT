@@ -12,6 +12,7 @@ SORBONNE UNIVERSITÉ
 
 import torch
 import torch.nn as nn
+import numpy as np
 
 class SimpleRoBERTa(nn.Module):
     # C'est une version simplifiée de l'architecture RoBERTa pour commencer
