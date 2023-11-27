@@ -14,6 +14,9 @@ import torch
 import torch.nn as nn
 import numpy as np
 
+from PositionalEncoding import PositionalEncoding
+
+
 class SimpleRoBERTa(nn.Module):
     # C'est une version simplifiée de l'architecture RoBERTa pour commencer
     def __init__(self, ff_dim, output_size, input_size=768, hidden_size=512, num_heads=4,  num_layers=6, max_len=1000):
@@ -35,20 +38,13 @@ class SimpleRoBERTa(nn.Module):
 
         # Couche de sortie
         self.output_layer = nn.Linear(hidden_size, output_size)
+            # Instanciation
+        self.positional_encoding_instance = PositionalEncoding(d_model=512, max_len=512)
 
-    def _get_positional_encoding(self, hidden_size, max_len=1000):
-        # Cette fonction permet de générer le positional encodding
-        position = torch.arange(0, max_len).unsqueeze(1).float()
-        # C'ets pour calculer des termes diviseurs pour l'encodage, avec une exponentielle pour assurer une décroissance rapide
-        div_term = torch.exp(torch.arange(0, hidden_size, 2).float() * -(np.log(10000.0) / hidden_size))
-        positional_encoding = torch.zeros((max_len, hidden_size))
-        positional_encoding[:, 0::2] = torch.sin(position * div_term) # pour les colonnes paires : PE(pos, 2i)
-        positional_encoding[:, 1::2] = torch.cos(position * div_term) # pour les colonnes impaires : PE(pos, 2i+1)
-        return positional_encoding.unsqueeze(0)
 
     def forward(self, x):
         # Ajout du positional encoding
-        x = x + self.positional_encoding[:, :x.size(1), :].to(x.device)
+        x = x + self.positional_encoding_instance(x)
 
         # Plusieurs couches d'attention empilées avec skip connections
         for attention_layer in self.attention_layers:
