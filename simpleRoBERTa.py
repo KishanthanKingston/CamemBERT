@@ -63,8 +63,3 @@ class SimpleRoBERTa(nn.Module):
         output = self.output_layer(x)
 
         return output
-
-
-
-
-
