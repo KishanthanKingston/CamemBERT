@@ -18,6 +18,10 @@ from transformer.PositionalEncoding import PositionalEncoding
 class SimpleRoBERTa(nn.Module):
     # C'est une version simplifiée de l'architecture RoBERTa pour commencer
     def __init__(self, ff_dim, output_size, input_size=768, hidden_size=512, num_heads=4,  num_layers=6, max_len=1000):
+        # ff_dim = la dimension de sortie
+        # output_size = la taille de la sortie
+        # num_heads = Nombre de tête d'attention
+        # num_layers = nombre de couches de tête d'attention (RoBERTa a normalement 12 couches)
 
         super(SimpleRoBERTa, self).__init__()
 
