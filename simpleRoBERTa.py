@@ -25,6 +25,8 @@ class SimpleRoBERTa(nn.Module):
 
         super(SimpleRoBERTa, self).__init__()
 
+        # self.positional_encoding = self._get_positional_encoding(hidden_size, max_len)
+
         # Plusieurs couches d'attention, on utilise MultiheadAttention disponible sur PyTorch
         self.attention_layers = nn.ModuleList([
             nn.MultiheadAttention(hidden_size, num_heads) for _ in range(num_layers)
