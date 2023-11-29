@@ -53,3 +53,26 @@ class MLM_RoBERTa(nn.Module):
 
         # On retourn la probabilités et l'indice du mots masqués
         return probabilities, mots_masques_indices
+
+    def train_mlm(self, dataloader, optimizer, loss_function, epochs=100):
+            self.train()
+    
+            for epoch in range(epochs):
+                total_loss = 0
+    
+                for inputs, labels in dataloader:
+                    optimizer.zero_grad()
+    
+                    # C'est pour obtenir les probabilités et les indices
+                    _, mots_masques_indices = self(inputs)
+    
+                    # la fonction de perte
+                    loss = loss_function(mots_masques_indices, labels)
+                    loss.backward()
+                    optimizer.step()
+    
+                    total_loss += loss.item()
+    
+                # On calcule la moyenne
+                average_loss = total_loss / len(dataloader)
+                print(f'Epoch {epoch + 1}/{epochs}, Loss: {average_loss}')
