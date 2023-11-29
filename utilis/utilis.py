@@ -26,14 +26,7 @@ class PreProcessing:
            '--input=sample_txt.txt --model_prefix=m_model --vocab_size=32000 --user_defined_symbols=<s>,</s>,<mask>,<pad>'
        )
     def sentence_token(self, txt:str):
-        # self.tokenizer = PreTrainedTokenizerFast(
-        #     tokenizer_file = "m_model.model",
-        #     mask_token = "<mask>"
-        # )
-        # self.mask_token_id = self.tokenizer.mask_token_id
-        # print(self.mask_token_id)
-        # token = self.tokenizer.encode(txt)
-        # return token
+
         sentences = txt.split('.')
         processed_text = ' '.join(f'<s> {sentence.strip()} </s>' for sentence in sentences if sentence.strip())
         sp = spm.SentencePieceProcessor()
@@ -66,7 +59,7 @@ class PreProcessing:
 
     def dynamic_masking(self, tokens):
         selected_tokens = np.random.choice([True, False], size=len(tokens), p=[0.15, 0.85])
-
+        
         for i in range(len(tokens)):
             if selected_tokens[i]:
                 action = np.random.choice(["mask", "random", "keep"], p=[0.8, 0.1, 0.1])
@@ -77,6 +70,7 @@ class PreProcessing:
                 elif action == "random":
                     tokens[i] = np.random.choice(tokens)
 
+        # Embedding 
         if len(tokens) < self.max_seq_len:
 
             pad_token_id = self.pad_token_id
@@ -84,10 +78,12 @@ class PreProcessing:
             tokens += [pad_token_id] * (self.max_seq_len - len(tokens))
         else:
             tokens = tokens[:self.max_seq_len]
-        return tokens
-    
-    def decode_tokens(self,ouput):
-        sp = spm.SentencePieceProcessor()
-        sp.load('m_model.model')
 
-        
+        masked_label = [1 if token==self.mask_token_id else 0 for token in tokens]
+        return tokens,masked_label
+    
+    def decode_tokens(self):
+        pass
+
+
+
