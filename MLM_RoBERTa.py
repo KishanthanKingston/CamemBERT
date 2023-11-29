@@ -17,6 +17,7 @@ import torch.nn as nn
 import numpy as np
 from transformer.PositionalEncoding import PositionalEncoding
 from simpleRoBERTa import SimpleRoBERTa
+from utilis.utilis import PreProcessing
 
 class MLM_RoBERTa(nn.Module):
     def __init__(self, vocab_size, ff_dim, output_size, hidden_size=512,  num_heads=4, num_layers=6, max_len=1000, seuil=0.5):
@@ -32,6 +33,8 @@ class MLM_RoBERTa(nn.Module):
 
         # On utilise le SimpleRoBERTa crée
         self.roberta = SimpleRoBERTa(ff_dim, output_size, hidden_size=hidden_size, num_heads=num_heads, num_layers=num_layers, max_len=max_len)
+        
+        self.pre_process = PreProcessing('fr_part_1.txt')
 
         # On utilise une couche de sortie pour la prédiction de mots masqués
         self.output_layer = nn.Linear(hidden_size, vocab_size)
@@ -47,9 +50,40 @@ class MLM_RoBERTa(nn.Module):
         # Couche de sortie pour prédire les mots masqués
         logits = self.output_layer(roberta_output)
         probabilities = self.softmax(logits)
+        
 
-        # C'est pour prédire les mots masqués
-        mots_masques_indices = (probabilities > self.seuil).nonzero()
+        # On applique le masquage juste pendant l'entraînement
+        if self.training:
+            # Il nous faut un booléen
+            #masked_logits = torch.masked_select(logits, mask_labels.bool().unsqueeze(-1).expand_as(logits)).view(-1, vocab_size)
+            #masked_labels = torch.masked_select(x, mask_labels.bool()).view(-1)
+            self.masked_tokens, self.masked_labels = pre_process.dynamic_masking(pre_process.sentence_token(x))
 
-        # On retourn la probabilités et l'indice du mots masqués
-        return probabilities, mots_masques_indices
+            return probabilities, self.masked_tokens, self.masked_labels
+
+        return probabilities
+    
+    def train_mlm(self, input_Text, optimizer, loss_function, epochs=100):
+        # Fonction pour entraîner le modèle MLM
+        # input_Text = Entrée contenant du texte brute (par exemple plusieurs phrases)
+        # Optimizer = Adam (Comme dans l'article)
+        # loss_dunction = CrossEntropy (comme dans l'artciel)
+        self.train()
+        
+        
+        for epoch in range(epochs):
+            total_loss = 0
+
+            for inputs in input_Text:
+                optimizer.zero_grad()
+
+                _, masked_logits, masked_labels = self(inputs)
+
+                loss = loss_function(masked_logits, masked_labels)
+                loss.backward()
+                optimizer.step()
+
+                total_loss += loss.item()
+
+            average_loss = total_loss / len(dataloader)
+            print(f'Epoch {epoch + 1}/{epochs}, Loss: {average_loss}')
