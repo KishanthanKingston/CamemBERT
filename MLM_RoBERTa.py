@@ -54,7 +54,7 @@ class MLM_RoBERTa(nn.Module):
         # On retourn la probabilités et l'indice du mots masqués
         return probabilities, mots_masques_indices
 
-    def train_mlm(self, dataloader, optimizer, loss_function, epochs=100):
+    def train_MLM(self, dataloader, optimizer, loss_function, epochs=100):
             self.train()
     
             for epoch in range(epochs):
