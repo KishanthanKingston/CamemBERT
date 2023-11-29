@@ -18,6 +18,7 @@ import numpy as np
 from transformer.PositionalEncoding import PositionalEncoding
 from simpleRoBERTa import SimpleRoBERTa
 from utilis.utilis import PreProcessing
+import torch.optim as optim
 
 class MLM_RoBERTa(nn.Module):
     def __init__(self, vocab_size, ff_dim, output_size, hidden_size=512,  num_heads=4, num_layers=6, max_len=1000, seuil=0.5):
@@ -42,6 +43,11 @@ class MLM_RoBERTa(nn.Module):
 
         # Seuil pour la prédiction des mots masqués
         self.seuil = seuil
+
+        # Par défaut
+        learning_rate = 0.001
+        parameters = self.parameters()  # Pour obtenir les paramètres
+        self.optimizer = optim.Adam(parameters, lr=learning_rate)
 
     def forward(self, x):
         # Appel au modèle RoBERTa
@@ -75,13 +81,13 @@ class MLM_RoBERTa(nn.Module):
             total_loss = 0
 
             for inputs in input_Text:
-                optimizer.zero_grad()
+                self.optimizer.zero_grad()
 
                 _, masked_logits, masked_labels = self(inputs)
 
                 loss = loss_function(masked_logits, masked_labels)
                 loss.backward()
-                optimizer.step()
+                self.optimizer.step()
 
                 total_loss += loss.item()
 
