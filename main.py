@@ -18,38 +18,40 @@ import random
 from MLM_RoBERTa import MLM_RoBERTa
 import numpy as np
 import torch
+import torch.nn as nn
 # Main file
 
 if __name__ == "__main__":
     
     pre_process = PreProcessing('fr_part_1.txt')
-    #pre_process.tokenized_data()
+    # #pre_process.tokenized_data()
 
     input = pre_process.read_dataset()
 
-    # pre_process.sentence_piece()
-    id = random.randint(0,100)
+    # # pre_process.sentence_piece()
+    #id = random.randint(0,100)
     # print(id)
-    data = input[id]
-    print(data)
+    #data = input[id]
+    # print(data)
 
-    masked_tokens,masked_label = pre_process.dynamic_masking(pre_process.sentence_token(data))
+    #masked_tokens,masked_label = pre_process.dynamic_masking(pre_process.sentence_token(data))
     # _tokens = pre_process.sentence_token(data)
 
-    # print(masked_tokens)
-    # print(_tokens)
-    # segment = segment_embedding(masked_tokens,512)
-    # position = positional_embedding(512,512)
-    # # print(len(position))
-    # roberta = SimpleRoBERTa(2048,1)
-    # input_tensor = torch.tensor(segment,dtype=torch.int)
-    # output_tensor = roberta(input_tensor)
+    #print(masked_tokens)
+    #print(masked_label)
 
-    # print(output_tensor)
- 
+    #masked_ = pre_process.mask_text(input[50])
+    #print(masked_)
+
+    # train_set,test_set = pre_process.create_dataloader(input)
+    # train_features= next(iter(train_set))
+    # print(train_features[0])
+    
     # First training of MLM Roberta
+    roberta = MLM_RoBERTa(32000,512,512)
+    roberta.train_mlm(nn.CrossEntropyLoss())
 
-
+    
 
 
 
