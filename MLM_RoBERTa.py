@@ -13,6 +13,7 @@ Code inspiré de : https://github.com/shreydan/masked-language-modeling/blob/mai
 """
 
 import torch
+import torch.backends.mps
 import torch.nn as nn
 import numpy as np
 from transformer.PositionalEncoding import PositionalEncoding
@@ -35,7 +36,7 @@ class MLM_RoBERTa(nn.Module):
         # On utilise le SimpleRoBERTa crée
         self.roberta = SimpleRoBERTa(ff_dim, output_size, hidden_size=hidden_size, num_heads=num_heads, num_layers=num_layers, max_len=max_len)
         
-        self.pre_process = PreProcessing('fr_part_1.txt')
+        self.pre_process = PreProcessing('/Volumes/Emir SSD/DATASET_pour_camemBERT/fr_part_1.txt')
 
         # On utilise une couche de sortie pour la prédiction de mots masqués
         self.output_layer = nn.Linear(hidden_size, vocab_size)
@@ -47,6 +48,13 @@ class MLM_RoBERTa(nn.Module):
         learning_rate = 0.001
         parameters = self.parameters()
         self.optimizer = optim.Adam(parameters,lr=learning_rate)
+        
+        if torch.backends.mps.is_available():
+            self.device = torch.device("mps")
+            print("Using GPU with MPS")
+        else:
+            self.device = torch.device("cpu")
+            print("Using CPU")
 
     def forward(self, x):
         # Appel au modèle RoBERTa

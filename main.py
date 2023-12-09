@@ -23,10 +23,10 @@ import torch.nn as nn
 
 if __name__ == "__main__":
     
-    pre_process = PreProcessing('fr_part_1.txt')
+    #pre_process = PreProcessing('fr_part_1.txt')
     # #pre_process.tokenized_data()
 
-    input = pre_process.read_dataset()
+    #input = pre_process.read_dataset()
 
     # # pre_process.sentence_piece()
     #id = random.randint(0,100)
@@ -49,6 +49,7 @@ if __name__ == "__main__":
     
     # First training of MLM Roberta
     roberta = MLM_RoBERTa(32000,512,512)
+    roberta = roberta.to(roberta.device)
     roberta.train_mlm(nn.CrossEntropyLoss())
 
     
