@@ -23,10 +23,10 @@ import torch
 
 if __name__ == "__main__":
     
-    # pre_process = PreProcessing('fr_part_1.txt')
-    # pre_process.tokenized_data()
+    #pre_process = PreProcessing('fr_part_1.txt')
+    # #pre_process.tokenized_data()
 
-    # input = pre_process.read_dataset()
+    #input = pre_process.read_dataset()
 
     # # pre_process.sentence_piece()
     #id = random.randint(0,100)

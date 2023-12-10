@@ -12,6 +12,7 @@ SORBONNE UNIVERSITÉ
 Code inspiré de : https://github.com/shreydan/masked-language-modeling/blob/main/model.py
 """
 import torch
+import torch.backends.mps
 import torch.nn as nn
 import numpy as np
 from transformer.PositionalEncoding import PositionalEncoding
@@ -32,6 +33,7 @@ class MLM_RoBERTa(nn.Module):
         self.pre_process = PreProcessing('fr_part_1.txt')
         
         self.training_data,self.testing_data = self.pre_process.create_dataloader(self.pre_process.read_dataset()[:100],shuffle=True)
+
         # On utilise une couche de sortie pour la prédiction de mots masqués
         self.output_layer = nn.Linear(hidden_size, vocab_size)
         self.softmax = nn.Softmax(dim=-1)
@@ -42,8 +44,14 @@ class MLM_RoBERTa(nn.Module):
         learning_rate = 1e-4 
         parameters = self.parameters()
         self.optimizer = optim.Adam(parameters,lr=learning_rate)
-    
-    def forward(self, x:torch.Tensor):
+
+    def forward(self, x):
+        # Appel au modèle RoBERTa
+        roberta_output = self.roberta(x)
+
+        # Couche de sortie pour prédire les mots masqués
+        logits = self.output_layer(roberta_output)
+        probabilities = self.softmax(logits)
         
         # Apply dynamic masking to the input
         masked_input, mask_labels = self.pre_process.dynamic_masking(x)
