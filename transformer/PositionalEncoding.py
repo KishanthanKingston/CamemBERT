@@ -21,7 +21,9 @@ class PositionalEncoding(nn.Module):
         super(PositionalEncoding, self).__init__()
         self.encoding = self.calculate_positional_encoding(seq_len, d)
         self.dropout = nn.Dropout(0.1)
-
+        
+        if torch.cuda.is_available():
+            self.encoding = self.encoding.cuda()
     def calculate_positional_encoding(self, seq_len, d):
         pe = torch.zeros(seq_len, d)
         n = torch.arange(seq_len).unsqueeze(1).float()

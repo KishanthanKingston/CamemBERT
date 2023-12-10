@@ -16,7 +16,7 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader
 import torch
-
+from torchtext.transforms import SentencePieceTokenizer
 
 class PreProcessing:
     def __init__(self,path:str) -> None:
@@ -24,6 +24,8 @@ class PreProcessing:
         self.path = path
         self.mask_token_id = None
         self.pad_token_id = None
+        self.vocab_size = 32000
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     def sentence_piece(self) -> None: 
        spm.SentencePieceTrainer.train(
@@ -40,16 +42,17 @@ class PreProcessing:
         self.mask_token_id = sp.piece_to_id('<mask>')
         self.pad_token_id = sp.piece_to_id('<pad>')
         
-        tokens = torch.as_tensor(sp.encode_as_ids(processed_text))
+        self.tokens = torch.as_tensor(sp.encode_as_ids(processed_text)).to(self.device)
 
-        self.len_token = len(tokens) # length of the token before padding 
+        self.len_token = len(self.tokens) # length of the token before padding 
+        # print(self.len_token)
         # we add the padding 
         if pad:
-            tokens = self.padding(tokens)
+            self.tokens = self.padding(self.tokens)
+       
+        return self.tokens
 
-        return tokens
-
-    def read_dataset(self, data = None):
+    def read_dataset(self, data = None) -> list[str]:
         with open(self.path,'r',encoding='utf-8') as text:
             input = text.readlines()
 
@@ -67,37 +70,55 @@ class PreProcessing:
 
     def padding(self,tokens:torch.Tensor) -> torch.Tensor:
         if len(tokens) < self.max_seq_len:
-            padding = torch.full((self.max_seq_len - len(tokens),), self.pad_token_id, dtype=tokens.dtype) # we create the padding tensor containing only with the pad_token_id 
+            padding = torch.full((self.max_seq_len - len(tokens),), self.pad_token_id, dtype=tokens.dtype,device=tokens.device) # we create the padding tensor containing only with the pad_token_id 
             padded_tokens = torch.cat((tokens, padding)) # we then concatenate the the tokens and the padding 
         else:
             padded_tokens = tokens[:self.max_seq_len]
 
         return padded_tokens
-
-    def dynamic_masking(self, logits: torch.Tensor):
-
-        selection_mask = torch.rand(logits.shape) < 0.15
-        
-        # Create a tensor to store the actions for each token
-        actions = torch.multinomial(torch.tensor([0.8, 0.1, 0.1]), logits.numel(), replacement=True).reshape(logits.shape) # we reshape the action tensor to the same shape as the logits 
-        
-        # Mask logits with the 'mask' action
-        mask_indices = (actions == 0) & selection_mask
-        masked_logits = logits.clone() # create a clone of the logits tensor
-        masked_logits[mask_indices] = float('-inf') # we set the probability of the mask to negative infinity so that it doesn't get picked during training
-        
-        # Replace logits with a random token for the 'random' action
-        random_indices = (actions == 1) & selection_mask
-        random_logits = torch.index_select(logits.view(-1), 0, torch.randperm(logits.numel())[:random_indices.sum()])
-        masked_logits[random_indices] = random_logits
-
-        # Create masked_label for the entire sequence
-        masked_labels = torch.zeros_like(logits)
-        masked_labels[mask_indices] = 1 #  This defines the indices where the mask_indices are applied not the random_indices. 
-        
-        return masked_logits, masked_labels
     
+    def dynamic_masking(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
 
+        mask_label = torch.full((self.len_token,), False, dtype=torch.bool, device=x.device)
+
+        # Randomly select 15% of the tokens for masking within the real token length
+        # Generate a tensor with selection probabilities this assures that there will always be a True values inside the 
+        # selection indices even when the len_token is small and having a probability of 0.15
+        selection_ = torch.full((self.len_token,), 0.15, device=x.device)
+
+        # Generate a tensor of indices sampled from multinomial distribution
+        selection_indices = torch.multinomial(selection_, self.len_token, replacement=True).bool()
+        
+        mask_label[selection_indices] = True
+
+        # Tensor to retrieve the masked tokens
+        masked_tokens = x.clone()
+
+        # Generate a random tensor for selection probabilities
+        selection_probs = torch.rand((self.len_token,), device=x.device)
+        
+        # Replace 80% of the selected tokens with <MASK> token
+        mask_indices = mask_label & (selection_probs < 0.8)
+        masked_tokens[:self.len_token][mask_indices] = self.mask_token_id
+
+        # Replace 10% of the selected tokens with original values
+        unchanged_indices = mask_label & ~mask_indices & (selection_probs < 0.9)
+        masked_tokens[:self.len_token][unchanged_indices] = x[:self.len_token][unchanged_indices]
+
+        # Replace 10% of the selected tokens with random tokens
+        random_indices = mask_label & ~mask_indices & ~unchanged_indices
+        random_tokens = torch.randint(low=0, high=self.vocab_size, size=(random_indices.sum(),), device=x.device, dtype=torch.long)
+        masked_tokens[:self.len_token][random_indices] = random_tokens
+
+        # # add the padding to the tokens 
+        # masked_tokens = self.padding(masked_tokens)
+
+        # adding zeros to the labels that larger than self.len_token
+        mask_label = torch.cat((mask_label, torch.full((x.shape[0]-self.len_token,), False, dtype=torch.bool, device=x.device)), dim=0)
+        
+        return masked_tokens, mask_label
+
+        
     def create_dataloader(self,input,batch_size:int = 64,test_size:float = 0.2,shuffle=True):
 
         # split the input into training and testing 
