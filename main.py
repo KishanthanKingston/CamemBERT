@@ -52,9 +52,18 @@ if __name__ == "__main__":
 
     # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+    # First training of MLM Roberta
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    # print('From main : ',device)
+    roberta = MLM_RoBERTa(32000, 512, 512)
+    roberta.to(device)
     
     criterion = nn.CrossEntropyLoss()
     roberta.train_mlm(criterion)
+    
+    torch.save(roberta.state_dict(), "MLM_RoBERTa.pth")
+
+
 
 
 
