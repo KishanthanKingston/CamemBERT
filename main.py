@@ -51,6 +51,8 @@ if __name__ == "__main__":
     roberta = MLM_RoBERTa(32000,512,512)
     roberta.train_mlm(nn.CrossEntropyLoss())
 
+    torch.save(roberta.state_dict(), "MLM_RoBERTa.pth")
+
     
 
 
