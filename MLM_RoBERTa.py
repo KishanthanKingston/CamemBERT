@@ -30,6 +30,12 @@ class MLM_RoBERTa(nn.Module):
         # On utilise le SimpleRoBERTa crée
         self.roberta = SimpleRoBERTa(ff_dim, output_size, hidden_size=hidden_size, num_heads=num_heads, num_layers=num_layers, max_len=max_len)
         
+        #self.pre_process = PreProcessing('fr_part_1.txt')
+        self.pre_process = PreProcessing('Data_1_2.txt')
+        
+        #self.training_data,self.testing_data = self.pre_process.create_dataloader(self.pre_process.read_dataset()[:100],shuffle=True)
+        self.training_data,self.testing_data = self.pre_process.create_dataloader(self.pre_process.read_dataset()[:],shuffle=True)
+
         # On utilise une couche de sortie pour la prédiction de mots masqués
         self.output_layer = nn.Linear(hidden_size, vocab_size)
         self.softmax = nn.Softmax(dim=-1)
