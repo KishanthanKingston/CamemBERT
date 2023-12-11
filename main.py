@@ -17,16 +17,16 @@ from simpleRoBERTa import SimpleRoBERTa
 import random
 from MLM_RoBERTa import MLM_RoBERTa
 import numpy as np
-import torch
 import torch.nn as nn
+import torch
 # Main file
 
 if __name__ == "__main__":
     
-    pre_process = PreProcessing('fr_part_1.txt')
+    #pre_process = PreProcessing('fr_part_1.txt')
     # #pre_process.tokenized_data()
 
-    input = pre_process.read_dataset()
+    #input = pre_process.read_dataset()
 
     # # pre_process.sentence_piece()
     #id = random.randint(0,100)
@@ -45,15 +45,22 @@ if __name__ == "__main__":
 
     # train_set,test_set = pre_process.create_dataloader(input)
     # train_features= next(iter(train_set))
-    # print(train_features[0])
-    
-    # First training of MLM Roberta
-    roberta = MLM_RoBERTa(32000,512,512)
-    roberta.train_mlm(nn.CrossEntropyLoss())
+    # # # print(train_features[0])
+    # masked_tokens,masked_label = pre_process.dynamic_masking(pre_process.sentence_token(train_features[0]))
+    # # print('Masked_tokens : ',masked_tokens.shape)
+    # print('Masked_labels : ',masked_label.shape)
 
-    torch.save(roberta.state_dict(), "MLM_RoBERTa.pth")
+    # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     
+    criterion = nn.CrossEntropyLoss()
+    roberta.train_mlm(criterion)
+
+
+
+
+
+
 
 
 
