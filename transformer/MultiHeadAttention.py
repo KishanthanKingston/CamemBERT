@@ -28,7 +28,7 @@ class MultiHeadAttention(nn.Module):
         
         self.output = nn.Linear(d_model, d_model)
     
-    def split_heads(self,tensor : torch.tensor) : 
+    def split_heads(self,tensor : torch.tensor) : # division des embeddings en plusieurs têtes
         batch_size, seq_length, d_model = tensor.size()
         tensor = tensor.view(batch_size, seq_length, self.num_heads, d_model // self.num_heads)
         tensor = tensor.transpose(1,2)
@@ -47,6 +47,7 @@ class MultiHeadAttention(nn.Module):
         return output, attention_weights
     
     def forward(self, query, key, value, mask=None):
+        # coversion en float pour les calculs 
         query = query.float()
         key = key.float()
         value = value.float()
@@ -64,11 +65,11 @@ class MultiHeadAttention(nn.Module):
         k = self.split_heads(k)
         v = self.split_heads(v)
         
-        scores = torch.matmul(q, k.transpose(-2, -1)) / np.sqrt(self.d_model)
-        attention_weights = torch.nn.functional.softmax(scores, dim=-1)
+        scores = torch.matmul(q, k.transpose(-2, -1)) / np.sqrt(self.d_model) # scores d'attention
+        attention_weights = torch.nn.functional.softmax(scores, dim=-1) # softmax pour obtenir les poids d'attention
         attention_output = torch.matmul(attention_weights, v)
         
-        attention_output = attention_output.transpose(1,2).contiguous()
+        attention_output = attention_output.transpose(1,2).contiguous() # Réorganisation
         attention_output = attention_output.view(attention_output.size(0), -1, self.d_model)
         
         output = self.output(attention_output)
