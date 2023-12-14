@@ -17,7 +17,7 @@ import torch.nn as nn
 import numpy as np
 
 class PositionalEncoding(nn.Module):
-    def __init__(self, seq_len=512, d=512):
+    def __init__(self, seq_len=512, d=512): # indication respcté de l'article 'Attention is all you need' -> Transformers
         super(PositionalEncoding, self).__init__()
         self.encoding = self.calculate_positional_encoding(seq_len, d)
         self.dropout = nn.Dropout(0.1)
@@ -29,8 +29,8 @@ class PositionalEncoding(nn.Module):
         n = torch.arange(seq_len).unsqueeze(1).float()
         div_term = torch.exp(torch.arange(0, d, 2).float() * -(torch.log(torch.Tensor([10000.0])) / d))
 
-        pe[:, 0::2] = torch.sin(n * div_term)
-        pe[:, 1::2] = torch.cos(n * div_term)
+        pe[:, 0::2] = torch.sin(n * div_term) # paire
+        pe[:, 1::2] = torch.cos(n * div_term) # impaire
 
         return pe
 
