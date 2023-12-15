@@ -10,16 +10,17 @@ SORBONNE UNIVERSITÉ
 @KishanthanKingston - Kishanthan KINGSTON
 
 Code inspiré de site officiel HuggingFace
-https://huggingface.co/Jean-Baptiste/camembert-ner
 """
 
-from transformers import RobertaTokenizer
 from sklearn.metrics import accuracy_score, classification_report
 import torch
 from utilis.utilis import PreProcessing
+from MLM_RoBERTa import MLM_RoBERTa
+import sentencepiece as spm
+import random
 
 class EvaluateRoBERTa:
-    def __init__(self, model_path, tokenizer_path, output_size, ff_dim, vocab_size):
+    def __init__(self, model_path, tokenizer_path,ff_dim, vocab_size):
         
         # model_path = le chemin vers notre modèle pré-entraîné
         # tokenizer_path = le chemin vers notre tokenizer
@@ -28,67 +29,65 @@ class EvaluateRoBERTa:
         # vocab_size = la taille de vocabulaire (Dans l'artcile, vocab_size = 32000)
         
         # On commence par charger notre modèle
-        self.model = MLM_RoBERTa(output_size, ff_dim, vocab_size)
-        self.model.load_state_dict(torch.load(model_path))
-        self.model.eval()
+        self.model = MLM_RoBERTa(vocab_size=vocab_size,ff_dim=ff_dim)
+        # self.model.load_state_dict(torch.load(model_path))    
 
-        # On utilise le tokenizer de HuggingFace. On peut aussi utiliser notre tokenizer
-        self.tokenizer = RobertaTokenizer.from_pretrained(tokenizer_path) 
-        # Sur le site de HuggingFace, ils ont tokenizer = RobertaTokenizer.from_pretrained('camembert-base')
+        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        self.tokenizer = spm.SentencePieceProcessor()
+        self.tokenizer.load(tokenizer_path)
 
-        self.pre_process = PreProcessing('fr_part_1.txt')
-
-    def evaluate_pt(self, text, true_labels):
+    def evaluate_pt(self, text,true_labels):
         # La fonction qu'on utilise pour évaluer pos-tagging
-        tokens = self.tokenizer.tokenize(self.tokenizer.decode(self.tokenizer.encode(text)))
-        inputs = self.tokenizer.encode(text, return_tensors="pt") # pt pour PyTorch
-
+        tokens = self.tokenizer.encode_as_pieces(text)
+        inputs = self.tokenizer.encode_as_ids(text)
+        
+        # Create a mask for a portion of tokens (you can customize this)
+        mask_indices = [i for i in range(len(tokens)) if random.random() < 0.15]  # Example: 15% masking
+        inputs = torch.as_tensor(inputs).to(self.device)
+        # Apply the mask to inputs
+        inputs[mask_indices] = self.tokenizer.piece_to_id('<mask>')
+        # print(inputs)
         # On n'a pas besoin de calculer les gradients
         with torch.no_grad():
-            outputs = self.model(inputs)
-            predictions = torch.argmax(outputs, dim=-1) # On effectue l'argmax seulement sur le dernière dimension de notre couche
+            self.model.to(self.device)
+            outputs = self.model(inputs,len(inputs))
+            predictions = torch.argmax(outputs[1], dim=-1) # On effectue l'argmax seulement sur le dernière dimension de notre couche
 
-        pred_labels = [self.tokenizer.convert_ids_to_tokens(i) for i in predictions.tolist()[0]]
-
+        print(predictions)
+        pred_labels = [self.tokenizer.decode_ids(i) for i in predictions.tolist()]
+        masked_pos_tags = [true_labels[i] for i, token in enumerate(tokens) if token == '<mask>']
+        print('pred_label : ',pred_labels)
+        print('mask pos tag : ',masked_pos_tags)
+        print(len(pred_labels))
+        print(len(masked_pos_tags))
         # On calcule ici notre accuracy
-        accuracy = accuracy_score(true_labels, pred_labels)
-        # Classification report de ScikitLearn
-        classificationReport = classification_report(true_labels, pred_labels)
+        # accuracy = accuracy_score(true_labels, pred_labels)
+        # # Classification report de ScikitLearn
+        # classificationReport = classification_report(true_labels, pred_labels)
 
-        return accuracy, classificationReport
+        # return accuracy, classificationReport
 
-    def evaluate_dp(self, text, true_labels):
-        # La fonction qu'on utilise pour évaluer dependency parsing
-        tokens = self.tokenizer.tokenize(self.tokenizer.decode(self.tokenizer.encode(text)))
-        inputs = self.tokenizer.encode(text, return_tensors="pt") # pt pour PyTorch
+    def read_conll_file(self, file_path):
+        dataset = []
+        with open(file_path, 'r', encoding='utf-8') as file:
+            current_sentence_text = ''
+            current_sentence_labels = []
+            for line in file:
+                line = line.strip()
+                if line.startswith('# text = '):
+                    current_sentence_text = line[len('# text = '):]
+                elif not line or line.startswith('#'):
+                    continue
+                elif line.startswith('1\t'):  # Start of a new sentence
+                    if current_sentence_text and current_sentence_labels:
+                        dataset.append({'text': current_sentence_text, 'labels': current_sentence_labels})
+                    current_sentence_labels = [line.split('\t')[3]] 
+                else:
+                    current_sentence_labels.append(line.split('\t')[3])
 
-        # On n'a pas besoin de calculer les gradients
-        with torch.no_grad():
-            outputs = self.model(inputs)
-            predictions = torch.argmax(outputs, dim=-1) # On effectue l'argmax seulement sur le dernière dimension de notre couche
+        # Add the last sentence to the list
+        if current_sentence_text and current_sentence_labels:
+            dataset.append({'text': current_sentence_text, 'labels': current_sentence_labels})
 
-        pred_labels = predictions.tolist()[0]
-
-        # Classification report de ScikitLearn
-        classificationReport = classification_report(true_labels, pred_labels)
-
-        return classificationReport
-
-    def evaluate_ner(self, text, true_labels):
-        # La fonction qu'on utilise pour évaluer named entity recognition
-        tokens = self.tokenizer.tokenize(self.tokenizer.decode(self.tokenizer.encode(text)))
-        inputs = self.tokenizer.encode(text, return_tensors="pt") # pt pour PyTorch
-
-        # On n'a pas besoin de calculer les gradients
-        with torch.no_grad():
-            outputs = self.model(inputs)
-            predictions = torch.argmax(outputs, dim=-1) # On effectue l'argmax seulement sur le dernière dimension de notre couche
-
-        pred_labels = predictions.tolist()[0]
-
-        # Classification report de ScikitLearn
-        classificationReport = classification_report(true_labels, pred_labels)
-
-        return classificationReport
-
-
+        return dataset
+    

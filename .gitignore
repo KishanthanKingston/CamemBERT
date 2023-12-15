@@ -6,3 +6,6 @@
 /utilis/temp.py
 /test.py
 __pycache__
+/MLM_RoBERTa.pth
+/*.conllu
+/Test1.ipynb

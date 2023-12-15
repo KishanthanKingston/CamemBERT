@@ -5,7 +5,7 @@
   "added_tokens": [
     {
       "id": 0,
-      "content": "<s>",
+      "content": "<unk>",
       "single_word": false,
       "lstrip": false,
       "rstrip": false,
@@ -14,7 +14,7 @@
     },
     {
       "id": 1,
-      "content": "</s>",
+      "content": "<s>",
       "single_word": false,
       "lstrip": false,
       "rstrip": false,
@@ -23,7 +23,7 @@
     },
     {
       "id": 2,
-      "content": "<unk>",
+      "content": "</s>",
       "single_word": false,
       "lstrip": false,
       "rstrip": false,
@@ -33,6 +33,15 @@
     {
       "id": 3,
       "content": "<mask>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    {
+      "id": 4,
+      "content": "<pad>",
       "single_word": false,
       "lstrip": false,
       "rstrip": false,
@@ -65,27 +74,28 @@
     "fuse_unk": false,
     "byte_fallback": false,
     "vocab": {
-      "<s>": 0,
-      "</s>": 1,
-      "<unk>": 2,
+      "<unk>": 0,
+      "<s>": 1,
+      "</s>": 2,
       "<mask>": 3,
-      ".": 4,
-      "_": 5,
-      "a": 6,
-      "e": 7,
-      "l": 8,
-      "m": 9,
-      "p": 10,
-      "s": 11,
-      "t": 12,
-      "x": 13,
-      "▁": 14,
-      "▁t": 15,
-      "▁x": 16
+      "<pad>": 4,
+      ".": 5,
+      "1": 6,
+      "2": 7,
+      "D": 8,
+      "_": 9,
+      "a": 10,
+      "t": 11,
+      "x": 12,
+      "▁": 13,
+      "▁t": 14,
+      "▁_": 15,
+      "▁a": 16
     },
     "merges": [
       "▁ t",
-      "▁ x"
+      "▁ _",
+      "▁ a"
     ]
   }
 }
