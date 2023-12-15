@@ -39,7 +39,7 @@ class PositionalEncoding(nn.Module):
     def forward(self, x):
         if x.dim() == 1:
             seq_len = x.size(0)
-            x = x.unsqueeze(1).to(self.encoding.device) 
+            x = x.unsqueeze(1).to(self.encoding.device)
         else:
             seq_len, _ = x.size()
 
@@ -49,4 +49,4 @@ class PositionalEncoding(nn.Module):
         encoding = encoding.to(x.device)  # Move to the same device as x
         # print(f"positional encoding size after: {encoding.size()}")
         x = x + encoding
-        return self.dropout(x.squeeze(1))
+        return self.dropout(x.squeeze(1)) 
