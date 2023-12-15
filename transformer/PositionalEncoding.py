@@ -34,6 +34,10 @@ class PositionalEncoding(nn.Module):
         encoding[:, 0::2] = torch.sin(position * div_term)
         encoding[:, 1::2] = torch.cos(position * div_term)
 
+        pe[:, 0::2] = torch.sin(n * div_term) # paire
+        pe[:, 1::2] = torch.cos(n * div_term) # impaire
+
+
         return encoding
 
     def forward(self, x):
