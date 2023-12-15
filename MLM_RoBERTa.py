@@ -19,6 +19,7 @@ from transformer.PositionalEncoding import PositionalEncoding
 from simpleRoBERTa import SimpleRoBERTa
 from utilis.utilis import PreProcessing
 import torch.optim as optim
+import matplotlib.pyplot as plt
 
 class CustomLR:
     def __init__(self, d_model=512, warmup_steps=4000):
@@ -36,20 +37,20 @@ class CustomLR:
 
 
 class MLM_RoBERTa(nn.Module):
-    def __init__(self, vocab_size, ff_dim, output_size, hidden_size=512,  num_heads=8, num_layers=12, max_len=1000, seuil=0.5):
+    def __init__(self, vocab_size, ff_dim, hidden_size=768, num_heads=12,  num_layers=12, max_len=512, seuil=0.5):
         
         super(MLM_RoBERTa, self).__init__()
         
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
         # On utilise le SimpleRoBERTa crée
-        self.roberta = SimpleRoBERTa(ff_dim, output_size, hidden_size=hidden_size, num_heads=num_heads, num_layers=num_layers, max_len=max_len)
+        self.roberta = SimpleRoBERTa(ff_dim, hidden_size=hidden_size, num_heads=num_heads, num_layers=num_layers, max_len=max_len)
         
-        #self.pre_process = PreProcessing('fr_part_1.txt')
-        self.pre_process = PreProcessing('Data_1_2.txt')
-        
+        self.pre_process = PreProcessing('fr_part_1.txt')
+        # self.pre_process = PreProcessing('Data_1_2.txt')
+
         #self.training_data,self.testing_data = self.pre_process.create_dataloader(self.pre_process.read_dataset()[:100],shuffle=True)
-        self.training_data,self.testing_data = self.pre_process.create_dataloader(self.pre_process.read_dataset()[:],shuffle=True)
+        self.training_data,self.testing_data = self.pre_process.create_dataloader(self.pre_process.read_dataset(),shuffle=True)
 
         # On utilise une couche de sortie pour la prédiction de mots masqués
         self.output_layer = nn.Linear(hidden_size, vocab_size)
@@ -57,22 +58,14 @@ class MLM_RoBERTa(nn.Module):
         self.vocab_size = vocab_size
         # Seuil pour la prédiction des mots masqués
         self.seuil = seuil
-
         learning_rate = 1e-4 
-        parameters = self.parameters()
-        self.optimizer = optim.Adam(self.parameters(), lr=learning_rate) #, betas=(0.9, 0.98), eps=1e-9)
+
+        self.optimizer = optim.Adam(self.parameters(), lr=learning_rate,betas=(0.9, 0.98), eps=1e-9) #, betas=(0.9, 0.98), eps=1e-9)
         #self.scheduler = torch.optim.lr_scheduler.LambdaLR(self.optimizer, lr_lambda=CustomLR(d_model=hidden_size))
 
-    def forward(self, x):
-        # Appel au modèle RoBERTa
-        roberta_output = self.roberta(x)
-
-        # Couche de sortie pour prédire les mots masqués
-        logits = self.output_layer(roberta_output)
-        probabilities = self.softmax(logits)
-        
+    def forward(self, x,len_token):
         # Apply dynamic masking to the input
-        masked_input, mask_labels = self.pre_process.dynamic_masking(x)
+        masked_input, mask_labels = self.pre_process.dynamic_masking(x,len_token)
 
         # Masked_input to the device
         masked_input = masked_input.to(self.device)
@@ -82,148 +75,119 @@ class MLM_RoBERTa(nn.Module):
         logits = self.output_layer(roberta_output)
         # Apply softmax to get probabilities
         probabilities = self.softmax(logits)
-        # print(masked_input)
-        """
-        if self.training:
-            # Select the logits and labels for the masked positions
-            masked_logits = torch.masked_select(logits, mask_labels.bool().unsqueeze(-1).expand(-1, self.vocab_size))
-            masked_logits = masked_logits.view(-1, self.vocab_size)
-
-            masked_labels = torch.masked_select(x, mask_labels.bool())
-            masked_labels = masked_labels.view(-1)
-            # if masked_logits.isnan().all():
-            #     print('Logits : ',logits.shape)
-            #     print('masked_logits : ',masked_logits.shape)
-            #     print('masked_labels : ',masked_labels.shape)
-            #     print('Mask labels : ',mask_labels)
-            return probabilities, masked_logits, masked_labels
-        """
         # Select the logits and labels for the masked positions
         masked_logits = torch.masked_select(logits, mask_labels.bool().unsqueeze(-1).expand(-1, self.vocab_size))
         masked_logits = masked_logits.view(-1, self.vocab_size)
 
         masked_labels = torch.masked_select(x, mask_labels.bool())
         masked_labels = masked_labels.view(-1)
-        # if masked_logits.isnan().all():
-        #     print('Logits : ',logits.shape)
-        #     print('masked_logits : ',masked_logits.shape)
-        #     print('masked_labels : ',masked_labels.shape)
-        #     print('Mask labels : ',mask_labels)
+
         return probabilities, masked_logits, masked_labels
 
         #return probabilities, torch.tensor([]), torch.tensor([])
 
-    def train_mlm(self, loss_function, epochs=100):
-        # Fonction pour entraîner le modèle MLM
-        # input_Text = Entrée contenant du texte brute (par exemple plusieurs phrases)
-        # Optimizer = Adam (Comme dans l'article)
-        # loss_dunction = CrossEntropy (comme dans l'artciel)
+    def train_mlm(self, loss_function, epochs=20):
         print(f'Starting training using {self.device}.....................')
         self.to(self.device)
         self.train()
 
-        # input_Text = self.pre_process.read_dataset()[:100]
         input_Text = next(iter(self.training_data))
-        
-
+        self.train_losses = []
+        self.train_accuracies = []
 
         for epoch in range(epochs):
             total_loss = 0
+            total_correct = 0
+            total_samples = 0
 
             for inputs in input_Text:
                 self.optimizer.zero_grad()
-                #self.scheduler.zero_grad()
 
-                # Convert to tensor and move to GPU
-                inputs = self.pre_process.sentence_token(inputs).to(self.device)  
-                _,masked_logits, masked_labels = self(inputs)
-                
+                inputs, len_token = self.pre_process.sentence_token(inputs)
+                inputs = inputs.to(self.device)
+                _, masked_logits, masked_labels = self(inputs, len_token)
+
                 loss = loss_function(masked_logits, masked_labels)
-                # if loss.isnan().any():
-                #     print('Nan in loss')
-                #     print('Inputs : ',inputs)
-                #     # print('Select indices :',select)
-                    
-                #     # print('Masked_logits : ', masked_logits.isnan().all())
-                #     # print('Masked_label : ',masked_labels.isnan().all())
-                #     # print('Masked logits : ',masked_logits)
-                #     # print('Masked labels : ',masked_labels)
-                #     break
                 loss.backward()
-                # Gradient clipping
-                torch.nn.utils.clip_grad_norm_(self.parameters(), max_norm=2,norm_type=2)
+                torch.nn.utils.clip_grad_norm_(self.parameters(), max_norm=2, norm_type=2)
                 self.optimizer.step()
-                #self.scheduler.step()
-                
+
                 total_loss += loss.item()
+
+                # Calculate accuracy
+                predictions = torch.argmax(masked_logits, dim=1)
+                correct_predictions = (predictions == masked_labels).sum().item()
+                total_correct += correct_predictions
+                total_samples += len(masked_labels)
 
             average_loss = total_loss / len(input_Text)
-            print(f'Epoch {epoch + 1}/{epochs}, Loss: {average_loss}')
-            
-            
-    def test_mlm(self, loss_function):
-        # C'est pour évaluer notre modèle
-        self.eval()  
-
-        total_correct = 0
-        total_samples = 0
-        total_loss = 0
-
-        test_data = next(iter(self.testing_data))
-
-        # C'est pour les métriques
-        true_positives = 0
-        false_positives = 0
-        false_negatives = 0
-
-        with torch.no_grad():
-            for inputs in test_data:
-                # C'est pour convertir en tensor et déplacer sur le GPU si nécessaire
-                inputs = self.pre_process.sentence_token(inputs).to(self.device)
-
-                # Les prédictions du modèle
-                probabilities, masked_logits, masked_labels = self(inputs)
-
-                loss = loss_function(masked_logits, masked_labels)
-                total_loss += loss.item()
-
-                # C'est pour calculer les métriques de classification
-                if masked_labels.numel() > 0 and probabilities.numel() > 0:
-                    predictions = torch.argmax(probabilities, dim=1)
-                    min_length = min(masked_labels.size(0), predictions.size(0))
-                    masked_labels = masked_labels[:min_length]
-                    predictions = predictions[:min_length]
-
-                    true_positives += torch.sum((predictions == 1) & (masked_labels == 1)).item()
-                    false_positives += torch.sum((predictions == 1) & (masked_labels == 0)).item()
-                    false_negatives += torch.sum((predictions == 0) & (masked_labels == 1)).item()
-
-                    correct_predictions = (predictions == masked_labels).sum().item()
-                    total_correct += correct_predictions
-                    total_samples += len(masked_labels)
-                else:
-                    print("Either predictions or masked_labels is empty.")
-
-        if total_samples > 0:
             accuracy = total_correct / total_samples
-            average_loss = total_loss / len(test_data)
+            print(f'Epoch {epoch + 1}/{epochs}, Loss: {average_loss}, Accuracy: {accuracy}')
+            self.train_losses.append(average_loss)
+            self.train_accuracies.append(accuracy)
+            
+            
+    def test_mlm(self, loss_function,epochs = 20):
+        self.eval()
+        self.test_accuracies = []
+        self.test_loss = []
+        with torch.no_grad():
+            for epoch in range(epochs):
+                total_correct = 0
+                total_samples = 0
+                total_loss = 0
 
-            # C'est pour calculer la précision, le rappel et le F1 Score
-            precision = true_positives / (true_positives + false_positives + 1e-8)
-            recall = true_positives / (true_positives + false_negatives + 1e-8)
-            f1_score = 2 * (precision * recall) / (precision + recall + 1e-8)
+                test_data = next(iter(self.testing_data))
 
-            print(f'Test Accuracy: {accuracy * 100:.2f}%')
-            print(f'Average Test Loss: {average_loss:.4f}')
-            print(f'Precision: {precision:.4f}')
-            print(f'Recall: {recall:.4f}')
-            print(f'F1 Score: {f1_score:.4f}')
+                for inputs in test_data:
+                    inputs, len_token = self.pre_process.sentence_token(inputs)
+                    inputs = inputs.to(self.device)
+                    probabilities, masked_logits, masked_labels = self(inputs,len_token)
 
-            return accuracy, average_loss
-        else:
-            print("No samples for evaluation.")
-            return 0, 0
+                    loss = loss_function(masked_logits, masked_labels)
+                    total_loss += loss.item()
 
-            average_loss = total_loss / len(input_Text)
-            print(f'Epoch {epoch + 1}/{epochs}, Loss: {average_loss}')
+                    if masked_labels.numel() > 0 and probabilities.numel() > 0:
+                        predictions = torch.argmax(probabilities, dim=1)
+                        min_length = min(masked_labels.size(0), predictions.size(0))
+                        masked_labels = masked_labels[:min_length]
+                        predictions = predictions[:min_length]
 
+                        true_positives = torch.sum((predictions == 1) & (masked_labels == 1)).item()
+                        false_positives = torch.sum((predictions == 1) & (masked_labels == 0)).item()
+                        false_negatives = torch.sum((predictions == 0) & (masked_labels == 1)).item()
+
+                        correct_predictions = (predictions == masked_labels).sum().item()
+                        total_correct += correct_predictions
+                        total_samples += len(masked_labels)
+                    else:
+                        print("Either predictions or masked_labels is empty.")
+                average_testing_loss = total_loss / len(test_data)
+                accuracy_test = total_correct / total_samples
+                print(f'Epoch {epoch + 1}/{epochs}, Loss: {average_testing_loss}, Accuracy: {accuracy_test}')
+                self.test_loss.append(average_testing_loss)
+                self.test_accuracies.append(accuracy_test)
+
+
+    def plot_train_metrics(self,epochs):
+        plt.plot(range(1, epochs + 1), self.train_losses, label="Training Loss", color="blue")
+        plt.title("Training Loss over Epochs")
+        plt.xlabel("Epoch")
+        plt.ylabel("Loss")
+        plt.grid()
+        plt.show()
+
+        plt.plot(range(1, epochs + 1), self.train_accuracies, label="Training Accuracy", color="orange")
+        plt.title("Training Accuracy over Epochs")
+        plt.xlabel("Epoch")
+        plt.ylabel("Accuracy")
+        plt.grid()
+        plt.show()
+        
+    def plot_test_metrics(self,epochs):
+        plt.plot(range(1, epochs + 1), self.test_accuracies, label="Test Accuracy", color="green")
+        plt.title("Test Accuracy over Epochs")
+        plt.xlabel("Epoch")
+        plt.ylabel("Accuracy")
+        plt.grid()
+        plt.show()
