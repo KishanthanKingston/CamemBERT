@@ -37,10 +37,9 @@ class PositionalEncoding(nn.Module):
         return encoding
 
     def forward(self, x):
-        # Ensure that the positional encoding matches the size of the input tensor
         if x.dim() == 1:
             seq_len = x.size(0)
-            x = x.unsqueeze(1).to(self.encoding.device)  # Add a dimension 
+            x = x.unsqueeze(1).to(self.encoding.device) 
         else:
             seq_len, _ = x.size()
 
@@ -50,4 +49,4 @@ class PositionalEncoding(nn.Module):
         encoding = encoding.to(x.device)  # Move to the same device as x
         # print(f"positional encoding size after: {encoding.size()}")
         x = x + encoding
-        return self.dropout(x.squeeze(1)) # Remove the added dimension
+        return self.dropout(x.squeeze(1))
