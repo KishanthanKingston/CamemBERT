@@ -49,4 +49,8 @@ class PositionalEncoding(nn.Module):
         encoding = encoding.to(x.device)  # Move to the same device as x
         # print(f"positional encoding size after: {encoding.size()}")
         x = x + encoding
+<<<<<<< HEAD
         return self.dropout(x.squeeze(1)) 
+=======
+        return self.dropout(x.squeeze(1)) 
+>>>>>>> daf9b6fb96ca35fcc75201b85676528569858433
