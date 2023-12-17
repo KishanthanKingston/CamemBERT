@@ -28,7 +28,7 @@ The notebook 'pretrained_roberta_mlm.ipynb' showcases the implementation of the 
 All the results concerning our MLM_RoBERTa are consolidated in the "test.ipynb" file, and the POS-tagging evaluation, performed with the pretrained version of RoBERTa trained on our French database, is presented in "Pos-tagging_Results.ipynb."
 
 All the necessary libraries are listed in the "requirements.txt" file. Ensure to install these dependencies by running the appropriate command, typically "pip install -r requirements.txt," to ensure that the development environment is properly configured with the specific versions of the required libraries.
-
+---
 References:
 
 [1] Martin, Louis, et al. « CamemBERT: A Tasty French Language Model ». Proceedings of the 58th Annual Meeting of the Association for Computational Linguistics, Association for Computational Linguistics, 2020, p. 7203‑19. DOI.org (Crossref), https://doi.org/10.18653/v1/2020.acl-main.645.
