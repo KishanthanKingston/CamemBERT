@@ -19,17 +19,25 @@ from sklearn.model_selection import train_test_split
 
 
 class PosTaggingDataset(Dataset):
+    """
+    This class prepares data for evaluating a POS tagging model by dividing it into components, 
+    ensuring each segment contains the correct words and associated labels.
+    """
     def __init__(self, data, tokenizer, label_mapping):
         self.data = data
         self.tokenizer = tokenizer
         self.label_mapping = label_mapping
 
     def __len__(self):
+        # length of the data
         return len(self.data)
 
     def __getitem__(self, idx):
+        # Retrieves the text and corresponding labels from the dataset
         text = self.data[idx]['text']
         labels = [self.label_mapping.get(label, self.label_mapping['<UNK>']) for label in self.data[idx]['labels']]
+
+        # Token
         inputs = self.tokenizer.encode_plus(
             text,
             add_special_tokens=True,
@@ -52,6 +60,9 @@ class PosTaggingDataset(Dataset):
         }
     
 class CollateFn:
+    """
+    This class handles batch processing, tokenizing, and label padding
+    """
     def __init__(self, tokenizer, label_mapping, max_length=64):
         self.tokenizer = tokenizer
         self.label_mapping = label_mapping
@@ -74,7 +85,8 @@ class CollateFn:
             max_length=actual_max_length,
             return_tensors='pt'
         )
-        
+
+        # Process labels for the entire batch
         labels = torch.tensor([
             [self.label_mapping.get(label, self.label_mapping['<UNK>']) for label in item['labels'][:actual_max_length]] +
             [self.label_mapping['<UNK>']] * (actual_max_length - len(item['labels'][:actual_max_length]))
@@ -89,6 +101,9 @@ class CollateFn:
     
 
 class ConlluReader:
+    """
+    This class is used to read collu files.
+    """
     def __init__(self, file_path):
         self.file_path = file_path
 
