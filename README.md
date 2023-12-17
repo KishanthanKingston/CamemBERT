@@ -12,7 +12,7 @@ Implemtation of the french CamemBERT
 #### __Attention !__ : To run the algorithms and test them if needed, you will need to download the models stored on a Google Drive. This has been implemented due to the limited space provided by GitHub. Furthermore, if you wish to obtain the dataset used for the training and testing processes of the study, you are invited to directly contact one of the three contributors of this repository via email. Thank you !
 ###### Folder name : roberta-retrained
 #### --> _Link to Google Drive_ : https://drive.google.com/drive/folders/1k2pQOxzCcy4teD9mpKAnWb5Ek6tr_AtA?usp=sharing
-#### --> Basically the main dataset OSCAR for training has been downloaded from this website : https://humanid.huma-num.fr/?url=aHR0cHM6Ly9vc2Nhci1wdWJsaWMuaHVtYS1udW0uZnIvc2h1ZmYtb3JpZy9mci8%3D . Only fr_part_{1,2,3}.txt have been used for our study. 
+#### --> Basically the main dataset OSCAR for training has been downloaded from this website : https://oscar-public.huma-num.fr/shuff-orig/fr/ . Only fr_part_{1,2,3}.txt have been used for our study. 
 #### --> Also, the dataset for POS tagging test are availbale here : https://drive.google.com/drive/folders/1ECQsmkoK6bcNFOP2pnuiPLVAzASS_iYr?usp=sharing
 ###### Folder name : Evaluation_dataset
 --- 
