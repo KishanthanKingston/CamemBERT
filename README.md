@@ -1,23 +1,29 @@
 # CamemBERT
 Implemtation of the french CamemBERT
 ---
-### Emir TAS
 ### Shivamshan SIVANESAN
 ### Kishanthan KINGSTON
+### Emir TAS
 ---
 ## Advanced Machine Learning project
 ### MSc. Intelligent systems engineering
 ---
 
 #### __Attention !__ : To run the algorithms and test them if needed, you will need to download the models stored on a Google Drive. This has been implemented due to the limited space provided by GitHub. Furthermore, if you wish to obtain the dataset used for the training and testing processes of the study, you are invited to directly contact one of the three contributors of this repository via email. Thank you !
-
+###### Folder name : roberta-retrained
 #### --> _Link to Google Drive_ : https://drive.google.com/drive/folders/1k2pQOxzCcy4teD9mpKAnWb5Ek6tr_AtA?usp=sharing
+#### --> Basically the main dataset OSCAR for training has been downloaded from this website : https://humanid.huma-num.fr/?url=aHR0cHM6Ly9vc2Nhci1wdWJsaWMuaHVtYS1udW0uZnIvc2h1ZmYtb3JpZy9mci8%3D . Only fr_part_{1,2,3}.txt have been used for our study. 
+#### --> Also, the dataset for POS tagging test are availbale here : https://drive.google.com/drive/folders/1ECQsmkoK6bcNFOP2pnuiPLVAzASS_iYr?usp=sharing
+###### Folder name : Evaluation_dataset
+--- 
 
-Our project aims to re-implement the CamemeBERT model as described in the article [1]. To achieve this goal, we developed SimpleRoBERTa, a simplified version of the CamemeBERT architecture that adheres to the structure outlined in the referenced article [1].
+Our project aims to re-implement the CamemeBERT model as described in the article [1]. To achieve this goal, we developed SimpleRoBERTa, a simplified version of the CamemBERT architecture that adheres to the structure outlined in the referenced article [1].
 
 The MLM RoBERTa class is specifically designed for training a Masked Language Model (MLM) using the previously created SimpleRoBERTa architecture. The preprocessing class is implemented in the "utils" folder, while the positional encoding class is implemented in the "transformer" folder. Additionally, we pretrained a version of RoBERTa using our French database, and the pretrained model can be found in the "pretrained_roberta_MLM.ipynb" notebook.
 
 We utilize the EvaluateRoBERTa class to evaluate our MLM_RoBERTa, and the "MLM_RoBERTa_POS_Tag.py" is used to fine-tune our model with POS-tag data. The "PosTagging.py" is used to evaluate the pretrained RoBERTa.
+
+The notebook 'pretrained_roberta_mlm.ipynb' showcases the implementation of the pre-trained RoBERTa model that has been fine-tuned using our dataset. Inside, you will find the training phase and the testing phase on an arbitrarily written sentence. All the results are already displayed as output.
 
 All the results concerning our MLM_RoBERTa are consolidated in the "test.ipynb" file, and the POS-tagging evaluation, performed with the pretrained version of RoBERTa trained on our French database, is presented in "Pos-tagging_Results.ipynb."
 
