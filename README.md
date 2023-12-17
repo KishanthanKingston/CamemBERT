@@ -1,5 +1,5 @@
 # CamemBERT
-implémentation du CamemBERT
+Implemtation of the french CamemBERT
 ---
 ### Emir TAS
 ### Shivamshan SIVANESAN
@@ -7,6 +7,11 @@ implémentation du CamemBERT
 ---
 ## Advanced Machine Learning project
 ### MSc. Intelligent systems engineering
+---
+
+#### __Attention !__ : To run the algorithms and test them if needed, you will need to download the models stored on a Google Drive. This has been implemented due to the limited space provided by GitHub. Furthermore, if you wish to obtain the dataset used for the training and testing processes of the study, you are invited to directly contact one of the three contributors of this repository via email. Thank you !
+
+#### --> _Link to Google Drive_ : https://drive.google.com/drive/folders/1k2pQOxzCcy4teD9mpKAnWb5Ek6tr_AtA?usp=sharing
 
 Our project aims to re-implement the CamemeBERT model as described in the article [1]. To achieve this goal, we developed SimpleRoBERTa, a simplified version of the CamemeBERT architecture that adheres to the structure outlined in the referenced article [1].
 
